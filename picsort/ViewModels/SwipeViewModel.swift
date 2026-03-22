@@ -19,6 +19,7 @@ final class SwipeViewModel {
     private let modelContext: ModelContext
     private let startDate: Date
     private let albumIdentifier: String?
+    private let sortMode: SortMode
 
     // MARK: - Queue
 
@@ -41,12 +42,14 @@ final class SwipeViewModel {
         photoService: PhotoLibraryService,
         modelContext: ModelContext,
         startDate: Date,
-        albumIdentifier: String? = nil
+        albumIdentifier: String? = nil,
+        sortMode: SortMode = .copy
     ) {
         self.photoService = photoService
         self.modelContext = modelContext
         self.startDate = startDate
         self.albumIdentifier = albumIdentifier
+        self.sortMode = sortMode
         self.dismissedCount = Self.fetchDismissedCount(modelContext: modelContext)
     }
 
@@ -147,6 +150,12 @@ final class SwipeViewModel {
             let albumID = await ensureAlbumExists(for: gallery)
             if let albumID {
                 await photoService.addPhoto(assetIdentifier: identifier, toAlbum: albumID)
+            }
+
+            // If moving (not copying), remove from source album
+            if sortMode == .move, let sourceAlbum = albumIdentifier,
+               sourceAlbum != PhoneAlbum.unsortedIdentifier {
+                await photoService.removePhoto(assetIdentifier: identifier, fromAlbum: sourceAlbum)
             }
         }
     }
@@ -309,4 +318,11 @@ final class SwipeViewModel {
 enum SwipeAction {
     case dismissed(assetIdentifier: String)
     case sorted(assetIdentifier: String, gallery: Gallery)
+}
+
+/// When sorting from an existing album, determines whether photos
+/// are moved out of the source album or kept in both.
+enum SortMode {
+    case move   // remove from source album after sorting
+    case copy   // keep in source album too
 }

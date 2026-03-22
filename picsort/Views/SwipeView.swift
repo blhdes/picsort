@@ -5,6 +5,7 @@ import Photos
 struct SwipeView: View {
     let startDate: Date
     let albumIdentifier: String?
+    let sortMode: SortMode
 
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
@@ -72,7 +73,8 @@ struct SwipeView: View {
                     photoService: photoService,
                     modelContext: modelContext,
                     startDate: startDate,
-                    albumIdentifier: albumIdentifier
+                    albumIdentifier: albumIdentifier,
+                    sortMode: sortMode
                 )
                 viewModel = vm
                 await vm.loadInitialBatch()

@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var startDate: Date?
     @State private var selectedAlbum: PhoneAlbum?
+    @State private var sortMode: SortMode = .copy
     @State private var showGalleries = false
 
     var body: some View {
@@ -10,7 +11,8 @@ struct ContentView: View {
             if let startDate {
                 SwipeView(
                     startDate: startDate,
-                    albumIdentifier: selectedAlbum?.collectionIdentifier
+                    albumIdentifier: selectedAlbum?.collectionIdentifier,
+                    sortMode: sortMode
                 )
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
@@ -37,7 +39,8 @@ struct ContentView: View {
             } else {
                 DatePickerView(
                     selectedDate: $startDate,
-                    selectedAlbum: $selectedAlbum
+                    selectedAlbum: $selectedAlbum,
+                    sortMode: $sortMode
                 )
             }
         }

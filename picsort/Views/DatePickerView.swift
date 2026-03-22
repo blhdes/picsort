@@ -4,12 +4,14 @@ import Photos
 struct DatePickerView: View {
     @Binding var selectedDate: Date?
     @Binding var selectedAlbum: PhoneAlbum?
+    @Binding var sortMode: SortMode
 
     @State private var pickerDate = Date()
     private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
     @State private var latestDate: Date?
     @State private var albums: [PhoneAlbum] = []
+    @State private var unsortedCount: Int = 0
     @State private var showAlbumPicker = false
 
     var body: some View {
@@ -33,6 +35,11 @@ struct DatePickerView: View {
                 // Album filter
                 albumFilterButton
 
+                // Move vs. copy — only when sorting from a real album
+                if let album = selectedAlbum, !album.isUnsorted {
+                    sortModePicker
+                }
+
                 VStack(spacing: 12) {
                     Button("Start Sorting") {
                         selectedDate = pickerDate
@@ -54,7 +61,7 @@ struct DatePickerView: View {
         .padding()
         .sheet(isPresented: $showAlbumPicker) {
             NavigationStack {
-                AlbumPickerView(albums: albums) { album in
+                AlbumPickerView(albums: albums, unsortedCount: unsortedCount) { album in
                     selectedAlbum = album
                 }
                 .toolbar {
@@ -75,7 +82,27 @@ struct DatePickerView: View {
             }
 
             albums = photoService.fetchAlbums()
+            unsortedCount = photoService.unsortedPhotoCount()
         }
+    }
+
+    // MARK: - Sort Mode Picker
+
+    private var sortModePicker: some View {
+        VStack(spacing: 6) {
+            Picker("Sort mode", selection: $sortMode) {
+                Text("Keep in album").tag(SortMode.copy)
+                Text("Move out").tag(SortMode.move)
+            }
+            .pickerStyle(.segmented)
+
+            Text(sortMode == .copy
+                 ? "Sorted photos stay in the source album too."
+                 : "Sorted photos are removed from the source album.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal)
     }
 
     // MARK: - Album Filter Button
@@ -91,6 +118,7 @@ struct DatePickerView: View {
                     Spacer()
                     Button {
                         self.selectedAlbum = nil
+                        self.sortMode = .copy
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)

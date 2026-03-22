@@ -111,6 +111,7 @@ struct AlbumImportSheet: View {
     private func importSelected() {
         let existingCount = galleries.count
         let albumsToImport = availableAlbums.filter { selectedAlbumIDs.contains($0.id) }
+        let service = PhotoLibraryService.shared
 
         for (index, album) in albumsToImport.enumerated() {
             let gallery = Gallery(
@@ -119,6 +120,17 @@ struct AlbumImportSheet: View {
                 albumIdentifier: album.collectionIdentifier
             )
             modelContext.insert(gallery)
+
+            // Link existing photos in this album as SortedPhoto records
+            let identifiers = service.fetchAssetIdentifiers(
+                from: .distantPast,
+                excluding: [],
+                inAlbum: album.collectionIdentifier
+            )
+            for id in identifiers {
+                let sorted = SortedPhoto(assetIdentifier: id, gallery: gallery)
+                modelContext.insert(sorted)
+            }
         }
 
         try? modelContext.save()

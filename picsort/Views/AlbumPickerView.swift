@@ -2,25 +2,24 @@ import SwiftUI
 
 struct AlbumPickerView: View {
     let albums: [PhoneAlbum]
+    let unsortedCount: Int
     let onSelect: (PhoneAlbum) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     @State private var sortOption: AlbumSortOption = .name
     @State private var sortAscending = true
-    @State private var unsortedCount: Int?
 
     var body: some View {
         List {
             // "Unsorted Photos" — pinned at the top
-            if searchText.isEmpty, let count = unsortedCount, count > 0 {
+            if searchText.isEmpty, unsortedCount > 0 {
                 Section {
                     Button {
-                        onSelect(.unsorted(photoCount: count))
+                        onSelect(.unsorted(photoCount: unsortedCount))
                         dismiss()
                     } label: {
                         HStack(spacing: 14) {
-                            // Warm accent circle to distinguish from regular albums
                             Circle()
                                 .fill(.tertiary)
                                 .frame(width: 10, height: 10)
@@ -30,7 +29,7 @@ struct AlbumPickerView: View {
                                     .fontWeight(.medium)
                                     .foregroundStyle(.primary)
 
-                                Text("\(count) photos not in any album")
+                                Text("\(unsortedCount) photos not in any album")
                                     .font(.caption)
                                     .foregroundStyle(.tertiary)
                             }
@@ -78,9 +77,6 @@ struct AlbumPickerView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 sortMenu
             }
-        }
-        .task {
-            unsortedCount = PhotoLibraryService.shared.unsortedPhotoCount()
         }
     }
 
