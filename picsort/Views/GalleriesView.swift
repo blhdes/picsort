@@ -95,12 +95,16 @@ struct GalleriesView: View {
             titleVisibility: .visible
         ) {
             if let gallery = galleryToDelete {
-                Button("Delete Photos from Phone", role: .destructive) {
+                Button("Delete Gallery & Photos", role: .destructive) {
                     viewModel?.deleteGalleryAndPhotos(gallery)
                     galleryToDelete = nil
                 }
-                Button("Remove from App Only") {
+                Button("Delete Gallery, Keep Photos") {
                     viewModel?.deleteGallery(gallery)
+                    galleryToDelete = nil
+                }
+                Button("Remove from picsort") {
+                    viewModel?.unlinkGallery(gallery)
                     galleryToDelete = nil
                 }
                 Button("Cancel", role: .cancel) {
@@ -108,7 +112,7 @@ struct GalleriesView: View {
                 }
             }
         } message: {
-            Text("\"Delete Photos\" permanently removes all photos in this gallery from your phone. \"Remove from App\" keeps them safe.")
+            Text("\"Remove from picsort\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
         }
         .task {
             if viewModel == nil {

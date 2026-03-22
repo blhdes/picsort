@@ -46,7 +46,17 @@ final class GalleryViewModel {
 
     // MARK: - Delete
 
-    /// Removes the gallery from the app only. Photos stay on the phone.
+    /// Unlinks the gallery from picsort only. iPhone album and photos stay untouched.
+    /// The gallery can be re-imported later via "Import from Phone."
+    func unlinkGallery(_ gallery: Gallery) {
+        modelContext.delete(gallery)
+        save()
+        fetchGalleries()
+        renumberDisplayOrder()
+    }
+
+    /// Removes the gallery from picsort AND deletes the iPhone album.
+    /// Photos stay in the library but lose their album grouping.
     func deleteGallery(_ gallery: Gallery) {
         let albumID = gallery.albumIdentifier
         modelContext.delete(gallery)
@@ -54,7 +64,6 @@ final class GalleryViewModel {
         fetchGalleries()
         renumberDisplayOrder()
 
-        // Also delete the iPhone album (photos remain in the library)
         if let albumID {
             Task {
                 await PhotoLibraryService.shared.deleteAlbum(identifier: albumID)
@@ -62,7 +71,7 @@ final class GalleryViewModel {
         }
     }
 
-    /// Removes the gallery AND permanently deletes all its photos from the phone.
+    /// Removes the gallery, deletes the iPhone album, AND permanently deletes all photos.
     func deleteGalleryAndPhotos(_ gallery: Gallery) {
         let identifiers = gallery.sortedPhotos.map(\.assetIdentifier)
         let albumID = gallery.albumIdentifier
