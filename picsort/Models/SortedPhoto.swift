@@ -3,8 +3,6 @@ import SwiftData
 
 @Model
 final class SortedPhoto {
-    #Unique<SortedPhoto>([\.assetIdentifier, \.gallery])
-
     var id: UUID
     var assetIdentifier: String
     var sortedAt: Date

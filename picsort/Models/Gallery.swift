@@ -10,6 +10,9 @@ final class Gallery {
     var displayOrder: Int
     var createdAt: Date
 
+    /// Links to a real iPhone Photos album. Nil until the album is created.
+    var albumIdentifier: String?
+
     @Relationship(deleteRule: .cascade, inverse: \SortedPhoto.gallery)
     var sortedPhotos: [SortedPhoto]
 
@@ -17,7 +20,8 @@ final class Gallery {
         name: String,
         iconName: String = "folder.fill",
         colorHex: String = "#007AFF",
-        displayOrder: Int = 0
+        displayOrder: Int = 0,
+        albumIdentifier: String? = nil
     ) {
         self.id = UUID()
         self.name = name
@@ -25,6 +29,7 @@ final class Gallery {
         self.colorHex = colorHex
         self.displayOrder = displayOrder
         self.createdAt = .now
+        self.albumIdentifier = albumIdentifier
         self.sortedPhotos = []
     }
 }

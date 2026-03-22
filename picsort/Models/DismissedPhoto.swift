@@ -3,8 +3,6 @@ import SwiftData
 
 @Model
 final class DismissedPhoto {
-    #Unique<DismissedPhoto>([\.assetIdentifier])
-
     var id: UUID
     var assetIdentifier: String
     var dismissedAt: Date

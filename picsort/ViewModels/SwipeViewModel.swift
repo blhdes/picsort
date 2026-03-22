@@ -18,6 +18,7 @@ final class SwipeViewModel {
     private let photoService: PhotoLibraryService
     private let modelContext: ModelContext
     private let startDate: Date
+    private let albumIdentifier: String?
 
     // MARK: - Queue
 
@@ -30,10 +31,16 @@ final class SwipeViewModel {
 
     // MARK: - Init
 
-    init(photoService: PhotoLibraryService, modelContext: ModelContext, startDate: Date) {
+    init(
+        photoService: PhotoLibraryService,
+        modelContext: ModelContext,
+        startDate: Date,
+        albumIdentifier: String? = nil
+    ) {
         self.photoService = photoService
         self.modelContext = modelContext
         self.startDate = startDate
+        self.albumIdentifier = albumIdentifier
     }
 
     // MARK: - Initial Load
@@ -44,7 +51,11 @@ final class SwipeViewModel {
         isLoading = true
 
         let excludedIDs = fetchExcludedIdentifiers()
-        let fetched = photoService.fetchAssetIdentifiers(from: startDate, excluding: excludedIDs)
+        let fetched = photoService.fetchAssetIdentifiers(
+            from: startDate,
+            excluding: excludedIDs,
+            inAlbum: albumIdentifier
+        )
 
         // Take the first batch
         let batch = Array(fetched.prefix(batchSize))
@@ -99,7 +110,7 @@ final class SwipeViewModel {
         showGalleryPicker = true
     }
 
-    /// Called from GalleryPickerSheet when user picks a gallery.
+    /// Called when user sorts a photo into a gallery.
     @MainActor
     func assignToGallery(_ gallery: Gallery) {
         guard let identifier = currentIdentifier else { return }
@@ -111,6 +122,14 @@ final class SwipeViewModel {
         lastAction = .sorted(assetIdentifier: identifier, gallery: gallery)
         showGalleryPicker = false
         advance()
+
+        // Sync to iPhone Photos album (background, non-blocking)
+        Task {
+            let albumID = await ensureAlbumExists(for: gallery)
+            if let albumID {
+                await photoService.addPhoto(assetIdentifier: identifier, toAlbum: albumID)
+            }
+        }
     }
 
     /// Cancel gallery picking (user dismissed the sheet).
@@ -130,9 +149,16 @@ final class SwipeViewModel {
             deleteDismissedPhoto(identifier: identifier)
             pushBackToFront(identifier: identifier)
 
-        case .sorted(let identifier, _):
+        case .sorted(let identifier, let gallery):
             deleteSortedPhoto(identifier: identifier)
             pushBackToFront(identifier: identifier)
+
+            // Also remove from iPhone Photos album
+            if let albumID = gallery.albumIdentifier {
+                Task {
+                    await photoService.removePhoto(assetIdentifier: identifier, fromAlbum: albumID)
+                }
+            }
         }
 
         lastAction = nil
@@ -207,6 +233,23 @@ final class SwipeViewModel {
             modelContext.delete(match)
             try? modelContext.save()
         }
+    }
+
+    /// Creates the iPhone album for a gallery if it doesn't exist yet.
+    /// Returns the album identifier.
+    private func ensureAlbumExists(for gallery: Gallery) async -> String? {
+        if let existing = gallery.albumIdentifier {
+            return existing
+        }
+
+        let albumID = await photoService.createAlbum(name: gallery.name)
+        if let albumID {
+            await MainActor.run {
+                gallery.albumIdentifier = albumID
+                try? modelContext.save()
+            }
+        }
+        return albumID
     }
 }
 

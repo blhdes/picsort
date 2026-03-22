@@ -31,6 +31,17 @@ final class GalleryViewModel {
         modelContext.insert(gallery)
         save()
         fetchGalleries()
+
+        // Create matching iPhone Photos album
+        Task {
+            let service = PhotoLibraryService()
+            if let albumID = await service.createAlbum(name: name) {
+                await MainActor.run {
+                    gallery.albumIdentifier = albumID
+                    self.save()
+                }
+            }
+        }
     }
 
     // MARK: - Delete

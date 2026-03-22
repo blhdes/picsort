@@ -3,24 +3,16 @@ import SwiftUI
 struct PhotoCardView: View {
     let assetIdentifier: String
     let photoService: PhotoLibraryService
-    let onSwipeLeft: () -> Void
-    let onSwipeRight: () -> Void
+    let offset: CGSize
 
     @State private var loader: PhotoImageLoader
-    @State private var offset: CGSize = .zero
 
     private let swipeThreshold: CGFloat = 150
 
-    init(
-        assetIdentifier: String,
-        photoService: PhotoLibraryService,
-        onSwipeLeft: @escaping () -> Void,
-        onSwipeRight: @escaping () -> Void
-    ) {
+    init(assetIdentifier: String, photoService: PhotoLibraryService, offset: CGSize = .zero) {
         self.assetIdentifier = assetIdentifier
         self.photoService = photoService
-        self.onSwipeLeft = onSwipeLeft
-        self.onSwipeRight = onSwipeRight
+        self.offset = offset
         self._loader = State(initialValue: PhotoImageLoader(
             service: photoService,
             assetIdentifier: assetIdentifier,
@@ -44,69 +36,30 @@ struct PhotoCardView: View {
                 swipeOverlay
             }
             .clipShape(RoundedRectangle(cornerRadius: 16))
+            .opacity(photoOpacity)
             .rotationEffect(.degrees(Double(offset.width / 20)))
             .offset(x: offset.width, y: offset.height * 0.4)
-            .gesture(dragGesture)
-            .animation(.interpolatingSpring(stiffness: 150, damping: 15), value: offset)
         }
         .padding()
         .task { await loader.load() }
     }
 
-    // MARK: - Gesture
+    // MARK: - Progressive transparency on right drag
 
-    private var dragGesture: some Gesture {
-        DragGesture()
-            .onChanged { value in
-                offset = value.translation
-            }
-            .onEnded { value in
-                if value.translation.width > swipeThreshold {
-                    flyOff(to: .right)
-                } else if value.translation.width < -swipeThreshold {
-                    flyOff(to: .left)
-                } else {
-                    withAnimation(.interpolatingSpring(stiffness: 150, damping: 15)) {
-                        offset = .zero
-                    }
-                }
-            }
+    private var photoOpacity: CGFloat {
+        guard offset.width > 0 else { return 1.0 }
+        return 1.0 - 0.55 * min(offset.width / swipeThreshold, 1.0)
     }
 
-    private func flyOff(to direction: SwipeDirection) {
-        let offScreenX: CGFloat = direction == .right ? 500 : -500
-        withAnimation(.easeIn(duration: 0.25)) {
-            offset = CGSize(width: offScreenX, height: 0)
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            switch direction {
-            case .left: onSwipeLeft()
-            case .right: onSwipeRight()
-            }
-        }
-    }
-
-    // MARK: - Overlay
+    // MARK: - Dismiss overlay (left drag only)
 
     @ViewBuilder
     private var swipeOverlay: some View {
-        let progress = min(abs(offset.width) / swipeThreshold, 1.0)
-
-        if offset.width > 0 {
-            // Swiping right → green tint
-            Color.green
-                .opacity(0.3 * progress)
-                .allowsHitTesting(false)
-        } else if offset.width < 0 {
-            // Swiping left → red tint
+        if offset.width < 0 {
+            let progress = min(abs(offset.width) / swipeThreshold, 1.0)
             Color.red
                 .opacity(0.3 * progress)
                 .allowsHitTesting(false)
         }
     }
-}
-
-private enum SwipeDirection {
-    case left, right
 }
