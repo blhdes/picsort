@@ -16,70 +16,76 @@ struct DatePickerView: View {
     @State private var albums: [PhoneAlbum] = []
     @State private var unsortedCount: Int = 0
     @State private var showAlbumPicker = false
+    @State private var showFullCalendar = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-            Text("Pick a starting date")
-                .font(.title2)
-                .fontWeight(.semibold)
+                Text("Pick a starting date")
+                    .font(.title2)
+                    .fontWeight(.semibold)
 
-            if let earliestDate, let latestDate {
-                DatePicker(
-                    "From",
-                    selection: noAnimationPickerDate,
-                    in: earliestDate...latestDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .frame(height: 350, alignment: .top)
-                .clipped()
-                .padding(.horizontal)
+                if let earliestDate, let latestDate {
+                    // Wheel date picker
+                    DatePicker(
+                        "Date",
+                        selection: $pickerDate,
+                        in: earliestDate...latestDate,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
 
-                // Album filter
-                albumFilterButton
+                    // Album filter
+                    albumFilterButton
 
-                // Move vs. copy — only when sorting from a real album
-                if let album = selectedAlbum, !album.isUnsorted {
-                    sortModePicker
-                }
+                    // Move vs. copy — only when sorting from a real album
+                    if let album = selectedAlbum, !album.isUnsorted {
+                        sortModePicker
+                    }
 
-                VStack(spacing: 12) {
-                    HStack(spacing: 12) {
-                        timerMenu
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            timerMenu
+
+                            Button {
+                                selectedDate = pickerDate
+                            } label: {
+                                Text(startButtonLabel)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                        }
+                        .padding(.horizontal)
+
+                        Button("From the very first photo") {
+                            selectedDate = earliestDate
+                        }
+                        .font(.subheadline)
 
                         Button {
-                            selectedDate = pickerDate
+                            isOnThisDay = true
+                            selectedDate = .now
                         } label: {
-                            Text(startButtonLabel)
-                                .frame(maxWidth: .infinity)
+                            Label("On This Day", systemImage: "clock.arrow.circlepath")
+                                .font(.subheadline)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
                     }
-                    .padding(.horizontal)
-
-                    Button("From the very first photo") {
-                        selectedDate = earliestDate
-                    }
-                    .font(.subheadline)
-
-                    Button {
-                        isOnThisDay = true
-                        selectedDate = .now
-                    } label: {
-                        Label("On This Day", systemImage: "clock.arrow.circlepath")
-                            .font(.subheadline)
-                    }
+                } else {
+                    ProgressView("Loading your library...")
                 }
-            } else {
-                ProgressView("Loading your library...")
             }
-        }
-        .padding()
-        .animation(nil, value: pickerDate)
+            .padding()
         }
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showFullCalendar = true
+                } label: {
+                    Image(systemName: "calendar")
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showGalleries = true
@@ -87,6 +93,9 @@ struct DatePickerView: View {
                     Image(systemName: "rectangle.stack")
                 }
             }
+        }
+        .sheet(isPresented: $showFullCalendar) {
+            calendarSheet
         }
         .sheet(isPresented: $showAlbumPicker) {
             NavigationStack {
@@ -113,22 +122,6 @@ struct DatePickerView: View {
             albums = photoService.fetchAlbums()
             unsortedCount = photoService.unsortedPhotoCount()
         }
-    }
-
-    /// Wraps pickerDate in a Binding that disables UIKit animations on set.
-    /// The graphical DatePicker uses UIDatePicker internally, so SwiftUI's
-    /// .animation(nil) can't reach it — UIView.setAnimationsEnabled(false) can.
-    private var noAnimationPickerDate: Binding<Date> {
-        Binding(
-            get: { pickerDate },
-            set: { newValue in
-                UIView.setAnimationsEnabled(false)
-                pickerDate = newValue
-                DispatchQueue.main.async {
-                    UIView.setAnimationsEnabled(true)
-                }
-            }
-        )
     }
 
     // MARK: - Focus Timer Menu
@@ -184,6 +177,34 @@ struct DatePickerView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal)
+    }
+
+    // MARK: - Full Calendar Sheet
+
+    private var calendarSheet: some View {
+        NavigationStack {
+            VStack {
+                if let earliestDate, let latestDate {
+                    DatePicker(
+                        "Date",
+                        selection: $pickerDate,
+                        in: earliestDate...latestDate,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .padding()
+                }
+                Spacer()
+            }
+            .navigationTitle("Pick a Date")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showFullCalendar = false }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
     }
 
     // MARK: - Album Filter Button
