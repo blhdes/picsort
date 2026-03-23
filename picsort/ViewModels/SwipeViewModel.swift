@@ -32,6 +32,7 @@ final class SwipeViewModel {
     private let startDate: Date
     private let albumIdentifier: String?
     private let sortMode: SortMode
+    private let isOnThisDay: Bool
 
     // MARK: - Queue
 
@@ -55,13 +56,15 @@ final class SwipeViewModel {
         modelContext: ModelContext,
         startDate: Date,
         albumIdentifier: String? = nil,
-        sortMode: SortMode = .copy
+        sortMode: SortMode = .copy,
+        isOnThisDay: Bool = false
     ) {
         self.photoService = photoService
         self.modelContext = modelContext
         self.startDate = startDate
         self.albumIdentifier = albumIdentifier
         self.sortMode = sortMode
+        self.isOnThisDay = isOnThisDay
         self.dismissedCount = Self.fetchDismissedCount(modelContext: modelContext)
     }
 
@@ -78,11 +81,19 @@ final class SwipeViewModel {
         isLoading = true
 
         let excludedIDs = fetchExcludedIdentifiers()
-        let fetched = photoService.fetchAssetIdentifiers(
-            from: startDate,
-            excluding: excludedIDs,
-            inAlbum: albumIdentifier
-        )
+        let fetched: [String]
+        if isOnThisDay {
+            fetched = photoService.fetchOnThisDayIdentifiers(
+                excluding: excludedIDs,
+                inAlbum: albumIdentifier
+            )
+        } else {
+            fetched = photoService.fetchAssetIdentifiers(
+                from: startDate,
+                excluding: excludedIDs,
+                inAlbum: albumIdentifier
+            )
+        }
 
         totalCount = fetched.count
 

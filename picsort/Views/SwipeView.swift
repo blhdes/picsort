@@ -8,6 +8,7 @@ struct SwipeView: View {
     let albumIdentifier: String?
     let sortMode: SortMode
     let focusDuration: TimeInterval?
+    let isOnThisDay: Bool
     var onSessionEnd: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
@@ -86,7 +87,8 @@ struct SwipeView: View {
                     modelContext: modelContext,
                     startDate: startDate,
                     albumIdentifier: albumIdentifier,
-                    sortMode: sortMode
+                    sortMode: sortMode,
+                    isOnThisDay: isOnThisDay
                 )
                 viewModel = vm
                 await vm.loadInitialBatch()

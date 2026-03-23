@@ -233,6 +233,51 @@ final class PhotoLibraryService {
         return identifiers
     }
 
+    /// Returns asset identifiers for photos taken on today's month+day in past years.
+    /// Sorted oldest first. Excludes current year and identifiers in `excludedIDs`.
+    func fetchOnThisDayIdentifiers(
+        excluding excludedIDs: Set<String>,
+        inAlbum albumIdentifier: String? = nil
+    ) -> [String] {
+        let calendar = Calendar.current
+        let today = calendar.dateComponents([.month, .day], from: .now)
+        let currentYear = calendar.component(.year, from: .now)
+
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.predicate = NSPredicate(
+            format: "mediaType == %d",
+            PHAssetMediaType.image.rawValue
+        )
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+
+        let result: PHFetchResult<PHAsset>
+
+        if let albumIdentifier,
+           albumIdentifier != PhoneAlbum.unsortedIdentifier,
+           let collection = PHAssetCollection.fetchAssetCollections(
+               withLocalIdentifiers: [albumIdentifier], options: nil
+           ).firstObject {
+            result = PHAsset.fetchAssets(in: collection, options: fetchOptions)
+        } else {
+            result = PHAsset.fetchAssets(with: fetchOptions)
+        }
+
+        var identifiers: [String] = []
+
+        result.enumerateObjects { asset, _, _ in
+            guard let date = asset.creationDate else { return }
+            let components = calendar.dateComponents([.month, .day, .year], from: date)
+            guard components.month == today.month,
+                  components.day == today.day,
+                  components.year != currentYear else { return }
+            if !excludedIDs.contains(asset.localIdentifier) {
+                identifiers.append(asset.localIdentifier)
+            }
+        }
+
+        return identifiers
+    }
+
     /// Returns the count of photos not in any user-created album.
     func unsortedPhotoCount() -> Int {
         let albummedIDs = identifiersInAllUserAlbums()
