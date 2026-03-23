@@ -43,6 +43,27 @@ final class PhotoLibraryService {
         return (earliest, latest)
     }
 
+    // MARK: - Favorite Toggle
+
+    /// Toggles the favorite state of a photo. Returns the new state (true = now favorited).
+    func toggleFavorite(identifier: String) async -> Bool {
+        guard let asset = PHAsset.fetchAssets(
+            withLocalIdentifiers: [identifier], options: nil
+        ).firstObject else { return false }
+
+        let newValue = !asset.isFavorite
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                let request = PHAssetChangeRequest(for: asset)
+                request.isFavorite = newValue
+            }
+            return newValue
+        } catch {
+            print("picsort: Failed to toggle favorite: \(error)")
+            return asset.isFavorite
+        }
+    }
+
     // MARK: - Album Write Operations
 
     /// Creates a new album in the iPhone Photos library. Returns its localIdentifier.

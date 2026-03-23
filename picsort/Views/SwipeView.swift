@@ -39,6 +39,10 @@ struct SwipeView: View {
     @State private var timerActive: Bool = false
     @State private var showSessionSummary: Bool = false
 
+    // Share sheet
+    @State private var showShareSheet = false
+    @State private var shareImage: UIImage?
+
     // Delete state
     @State private var isDeleting = false
     @State private var deleteMessage: DeleteFeedback?
@@ -79,6 +83,11 @@ struct SwipeView: View {
                 selectedIDs: $sidebarGalleryIDs,
                 maxSelection: maxSidebarGalleries
             )
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let shareImage {
+                ShareSheet(items: [shareImage])
+            }
         }
         .task {
             if viewModel == nil {
@@ -318,7 +327,8 @@ struct SwipeView: View {
     // MARK: - Gesture Handling
 
     private func updateHighlight(translation: CGSize, location: CGPoint) {
-        if translation.width > 30 {
+        // Only highlight galleries when horizontal is the dominant axis
+        if translation.width > 30 && abs(translation.width) > abs(translation.height) {
             highlightedGalleryID = findGallery(at: location)
         } else {
             highlightedGalleryID = nil
@@ -327,7 +337,38 @@ struct SwipeView: View {
 
     private func handleSwipeEnd(_ value: DragGesture.Value, viewModel: SwipeViewModel) {
         let tx = value.translation.width
+        let ty = value.translation.height
         let ptx = value.predictedEndTranslation.width
+        let pty = value.predictedEndTranslation.height
+
+        // Vertical swipe: primary axis is vertical
+        if abs(ty) > abs(tx) {
+            // Swipe UP → favorite
+            if ty < -swipeThreshold || pty < -swipeThreshold {
+                snapBack()
+                Task {
+                    guard let identifier = viewModel.currentIdentifier else { return }
+                    let isFavorite = await photoService.toggleFavorite(identifier: identifier)
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showToast(isFavorite ? "Favorited ♥" : "Unfavorited")
+                }
+                return
+            }
+            // Swipe DOWN → share
+            if ty > swipeThreshold || pty > swipeThreshold {
+                snapBack()
+                Task {
+                    guard let identifier = viewModel.currentIdentifier else { return }
+                    let screenSize = UIScreen.main.bounds.size
+                    let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
+                    if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
+                        shareImage = image
+                        showShareSheet = true
+                    }
+                }
+                return
+            }
+        }
 
         // Left swipe: dismiss if actual OR predicted distance exceeds threshold
         if tx < -swipeThreshold || ptx < -swipeThreshold {
@@ -560,4 +601,16 @@ struct SwipeView: View {
 struct DeleteFeedback: Equatable {
     let sessionCount: Int
     let totalCount: Int
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

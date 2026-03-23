@@ -51,15 +51,40 @@ struct PhotoCardView: View {
         return 1.0 - 0.3 * min(offset.width / swipeThreshold, 1.0)
     }
 
-    // MARK: - Dismiss overlay (left drag only)
+    // MARK: - Directional overlays
 
     @ViewBuilder
     private var swipeOverlay: some View {
-        if offset.width < 0 {
+        let isVertical = abs(offset.height) > abs(offset.width)
+
+        if offset.width < 0 && !isVertical {
+            // Left drag — red (dismiss)
             let progress = min(abs(offset.width) / swipeThreshold, 1.0)
             Color.red
                 .opacity(0.3 * progress)
                 .allowsHitTesting(false)
+        } else if offset.height < 0 && isVertical {
+            // Up drag — gold (favorite)
+            let progress = min(abs(offset.height) / swipeThreshold, 1.0)
+            ZStack {
+                Color.yellow
+                    .opacity(0.25 * progress)
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.white.opacity(0.8 * progress))
+            }
+            .allowsHitTesting(false)
+        } else if offset.height > 0 && isVertical {
+            // Down drag — blue (share)
+            let progress = min(abs(offset.height) / swipeThreshold, 1.0)
+            ZStack {
+                Color.blue
+                    .opacity(0.25 * progress)
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.white.opacity(0.8 * progress))
+            }
+            .allowsHitTesting(false)
         }
     }
 }
