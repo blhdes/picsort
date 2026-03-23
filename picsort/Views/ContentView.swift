@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var sortMode: SortMode = .copy
     @State private var focusDuration: TimeInterval?
     @State private var showGalleries = false
+    @State private var showInsights = false
 
     var body: some View {
         NavigationStack {
@@ -32,11 +33,22 @@ struct ContentView: View {
 
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
+                            showInsights = true
+                        } label: {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                        }
+                    }
+
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
                             showGalleries = true
                         } label: {
                             Image(systemName: "rectangle.stack")
                         }
                     }
+                }
+                .sheet(isPresented: $showInsights) {
+                    InsightsView()
                 }
                 .sheet(isPresented: $showGalleries) {
                     NavigationStack {

@@ -14,6 +14,7 @@ struct DatePickerView: View {
     @State private var albums: [PhoneAlbum] = []
     @State private var unsortedCount: Int = 0
     @State private var showAlbumPicker = false
+    @State private var showInsights = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -78,6 +79,18 @@ struct DatePickerView: View {
             Spacer()
         }
         .padding()
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showInsights = true
+                } label: {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                }
+            }
+        }
+        .sheet(isPresented: $showInsights) {
+            InsightsView()
+        }
         .sheet(isPresented: $showAlbumPicker) {
             NavigationStack {
                 AlbumPickerView(albums: albums, unsortedCount: unsortedCount) { album in
