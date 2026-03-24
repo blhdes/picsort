@@ -9,6 +9,7 @@ struct DuplicateSweepView: View {
     @State private var viewModel: DuplicateSweepViewModel?
     @State private var showPicker = true
     @State private var deleteMessage: String?
+    @State private var keptID: String?
 
     private let photoService = PhotoLibraryService.shared
 
@@ -114,36 +115,51 @@ struct DuplicateSweepView: View {
 
             Spacer()
 
-            // Side by side photos
-            HStack(spacing: 2) {
-                // Reference (left)
+            // Side by side: HStack for portrait, VStack for landscape
+            let layout = viewModel.isLandscape
+                ? AnyLayout(VStackLayout(spacing: 2))
+                : AnyLayout(HStackLayout(spacing: 2))
+
+            layout {
+                // Reference (left / top)
                 if let refID = viewModel.referenceIdentifier {
                     comparisonCard(
                         identifier: refID,
                         label: "Original",
+                        isKept: keptID == refID,
                         action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                viewModel.keepReference()
-                            }
+                            guard keptID == nil else { return }
+                            keptID = refID
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                                viewModel.keepReference()
+                                keptID = nil
+                            }
                         }
                     )
+                    .id(refID)
                 }
 
-                // Duplicate (right)
+                // Duplicate (right / bottom)
                 if let dupID = viewModel.currentDuplicateIdentifier {
                     comparisonCard(
                         identifier: dupID,
                         label: "Duplicate",
+                        isKept: keptID == dupID,
                         action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                viewModel.keepDuplicate()
-                            }
+                            guard keptID == nil else { return }
+                            keptID = dupID
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                                viewModel.keepDuplicate()
+                                keptID = nil
+                            }
                         }
                     )
+                    .id(dupID)
                 }
             }
+            .animation(.easeInOut(duration: 0.35), value: viewModel.isLandscape)
 
             Spacer()
 
@@ -181,8 +197,11 @@ struct DuplicateSweepView: View {
     private func comparisonCard(
         identifier: String,
         label: String,
+        isKept: Bool,
         action: @escaping () -> Void
     ) -> some View {
+        let isDismissed = keptID != nil && !isKept
+
         VStack(spacing: 6) {
             Button(action: action) {
                 DuplicatePhotoView(
@@ -190,6 +209,26 @@ struct DuplicateSweepView: View {
                     photoService: photoService
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay {
+                    if isKept {
+                        // Green checkmark on the kept photo
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.green.opacity(0.3))
+                            .overlay {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundStyle(.white)
+                            }
+                            .transition(.opacity)
+                    } else if isDismissed {
+                        // Red tint on the dismissed photo
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.red.opacity(0.3))
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.2), value: isKept)
+                .animation(.easeInOut(duration: 0.2), value: isDismissed)
             }
             .buttonStyle(.plain)
 

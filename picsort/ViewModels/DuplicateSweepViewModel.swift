@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Photos
 
 @Observable
 final class DuplicateSweepViewModel {
@@ -20,6 +21,9 @@ final class DuplicateSweepViewModel {
     private(set) var totalDuplicatesFound: Int = 0
     private(set) var markedForDeletion: Int = 0
     private(set) var currentIndex: Int = 0
+
+    /// True when the reference photo is landscape (wider than tall).
+    private(set) var isLandscape: Bool = false
 
     // MARK: - Private
 
@@ -44,6 +48,8 @@ final class DuplicateSweepViewModel {
         phase = .scanning
         referenceIdentifier = assetIdentifier
         lastAction = nil
+
+        updateOrientation(for: assetIdentifier)
 
         let matches = await scanner.findDuplicates(
             of: assetIdentifier,
@@ -87,6 +93,7 @@ final class DuplicateSweepViewModel {
             newReference: duplicateID
         )
         referenceIdentifier = duplicateID
+        updateOrientation(for: duplicateID)
         advance()
     }
 
@@ -163,6 +170,16 @@ final class DuplicateSweepViewModel {
 
         currentDuplicateIdentifier = duplicateQueue.removeFirst()
         currentIndex += 1
+    }
+
+    private func updateOrientation(for assetIdentifier: String) {
+        if let asset = PHAsset.fetchAssets(
+            withLocalIdentifiers: [assetIdentifier], options: nil
+        ).firstObject {
+            isLandscape = asset.pixelWidth > asset.pixelHeight
+        } else {
+            isLandscape = false
+        }
     }
 
     private func dismiss(identifier: String) {
