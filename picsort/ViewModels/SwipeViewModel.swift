@@ -300,7 +300,12 @@ final class SwipeViewModel {
     private func fetchExcludedIdentifiers() -> Set<String> {
         var excluded = Set<String>()
 
-        let sortedDescriptor = FetchDescriptor<SortedPhoto>()
+        // Only exclude photos the user actually sorted — not imports.
+        // Imported photos should still appear so the user can move/copy
+        // them to other galleries.
+        let sortedDescriptor = FetchDescriptor<SortedPhoto>(
+            predicate: #Predicate<SortedPhoto> { !$0.isImported }
+        )
         if let sorted = try? modelContext.fetch(sortedDescriptor) {
             for photo in sorted {
                 excluded.insert(photo.assetIdentifier)

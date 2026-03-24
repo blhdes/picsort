@@ -20,7 +20,7 @@ struct DatePickerView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 32) {
                 Text("Pick a starting date")
                     .font(.title2)
                     .fontWeight(.semibold)
@@ -44,7 +44,7 @@ struct DatePickerView: View {
                         sortModePicker
                     }
 
-                    VStack(spacing: 12) {
+                    VStack(spacing: 20) {
                         HStack(spacing: 12) {
                             timerMenu
 
@@ -77,6 +77,7 @@ struct DatePickerView: View {
                 }
             }
             .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
