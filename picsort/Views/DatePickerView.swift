@@ -19,77 +19,74 @@ struct DatePickerView: View {
     @State private var showFullCalendar = false
 
     var body: some View {
-        GeometryReader { geo in
-            ScrollView {
-                VStack(spacing: 28) {
-                    Text("Pick a starting date")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-
-                    if let earliestDate, let latestDate {
-                        // Wheel date picker
-                        DatePicker(
-                            "Date",
-                            selection: $pickerDate,
-                            in: earliestDate...latestDate,
-                            displayedComponents: .date
-                        )
-                        .datePickerStyle(.wheel)
-                        .labelsHidden()
-
-                        // Album filter
-                        albumFilterButton
-
-                        // Move vs. copy — only when sorting from a real album
-                        if let album = selectedAlbum, !album.isUnsorted {
-                            sortModePicker
-                        }
-
-                        VStack(spacing: 18) {
-                            HStack(spacing: 12) {
-                                timerMenu
-
-                                Button {
-                                    selectedDate = pickerDate
-                                } label: {
-                                    Text(startButtonLabel)
-                                        .frame(maxWidth: .infinity)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
-                            }
-                            .padding(.horizontal)
-
-                            Button("From the very first photo") {
-                                selectedDate = earliestDate
-                            }
-                            .font(.subheadline)
-
-                            Button {
-                                isOnThisDay = true
-                                selectedDate = .now
-                            } label: {
-                                Label("On This Day", systemImage: "clock.arrow.circlepath")
-                                    .font(.subheadline)
-                            }
-                        }
-                    } else {
-                        ProgressView("Loading your library...")
-                    }
-                }
-                .padding(.horizontal)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: geo.size.height)
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+        VStack(spacing: 28) {
+            HStack(spacing: 8) {
+                Text("Pick a starting date")
+                    .font(.title2)
+                    .fontWeight(.semibold)
                 Button {
                     showFullCalendar = true
                 } label: {
                     Image(systemName: "calendar")
+                        .font(.title3)
                 }
             }
+
+            if let earliestDate, let latestDate {
+                // Wheel date picker
+                DatePicker(
+                    "Date",
+                    selection: $pickerDate,
+                    in: earliestDate...latestDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+
+                // Album filter
+                albumFilterButton
+
+                // Move vs. copy — only when sorting from a real album
+                if let album = selectedAlbum, !album.isUnsorted {
+                    sortModePicker
+                }
+
+                VStack(spacing: 18) {
+                    HStack(spacing: 12) {
+                        timerMenu
+
+                        Button {
+                            selectedDate = pickerDate
+                        } label: {
+                            Text(startButtonLabel)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                    }
+                    .padding(.horizontal)
+
+                    Button("From the very first photo") {
+                        selectedDate = earliestDate
+                    }
+                    .font(.subheadline)
+
+                    Button {
+                        isOnThisDay = true
+                        selectedDate = .now
+                    } label: {
+                        Label("On This Day", systemImage: "clock.arrow.circlepath")
+                            .font(.subheadline)
+                    }
+                }
+            } else {
+                Spacer()
+                ProgressView("Loading your library...")
+                Spacer()
+            }
+        }
+        .padding(.horizontal)
+        .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showGalleries = true
