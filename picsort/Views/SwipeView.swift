@@ -9,6 +9,8 @@ struct SwipeView: View {
     let sortMode: SortMode
     let focusDuration: TimeInterval?
     let isOnThisDay: Bool
+    var onBack: (() -> Void)?
+    var onShowGalleries: (() -> Void)?
     var onSessionEnd: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
@@ -43,6 +45,9 @@ struct SwipeView: View {
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
 
+    // Pinch-to-zoom full screen
+    @State private var isPhotoZoomed = false
+
     // Delete state
     @State private var isDeleting = false
     @State private var deleteMessage: DeleteFeedback?
@@ -74,6 +79,7 @@ struct SwipeView: View {
             } else {
                 ProgressView()
             }
+
         }
         .onPreferenceChange(GalleryFramePreferenceKey.self) { frames in
             galleryFrames = frames
@@ -144,6 +150,7 @@ struct SwipeView: View {
                 }
                 .gesture(longPressGesture)
                 .highPriorityGesture(dragGesture(viewModel: viewModel))
+                .simultaneousGesture(magnifyGesture)
 
                 // Sidebar overlay — visible ABOVE the photo, non-interactive
                 .overlay {
@@ -174,6 +181,7 @@ struct SwipeView: View {
                     }
                     .padding(.trailing, 16)
                     .padding(.bottom, 16)
+                    .opacity(chromeOpacity)
                 }
 
                 // "Delete All" button — bottom left
@@ -192,7 +200,36 @@ struct SwipeView: View {
                         .disabled(isDeleting)
                         .padding(.leading, 16)
                         .padding(.bottom, 16)
+                        .opacity(chromeOpacity)
                     }
+                }
+
+                // Navigation buttons (replaces toolbar so they can fade)
+                .overlay(alignment: .topLeading) {
+                    Button {
+                        onBack?()
+                    } label: {
+                        Image(systemName: "calendar")
+                            .font(.body)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 8)
+                    .opacity(chromeOpacity)
+                }
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        onShowGalleries?()
+                    } label: {
+                        Image(systemName: "rectangle.stack")
+                            .font(.body)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.top, 8)
+                    .opacity(chromeOpacity)
                 }
         }
         // Success message overlay
@@ -232,6 +269,7 @@ struct SwipeView: View {
                 }
             }
             .padding(.top, 8)
+            .opacity(chromeOpacity)
             .animation(.easeInOut(duration: 0.25), value: toastMessage)
         }
         // Focus session summary
@@ -256,6 +294,7 @@ struct SwipeView: View {
                 undoButton(viewModel: viewModel)
             }
             .padding(.bottom, 32)
+            .opacity(chromeOpacity)
         }
     }
 
@@ -284,7 +323,8 @@ struct SwipeView: View {
                 PhotoCardView(
                     assetIdentifier: currentID,
                     photoService: photoService,
-                    offset: cardOffset
+                    offset: cardOffset,
+                    isZoomed: isPhotoZoomed
                 )
                 .id(currentID)
             }
@@ -421,6 +461,19 @@ struct SwipeView: View {
         isLongPressing = false
     }
 
+    // MARK: - Pinch to Zoom
+
+    private var magnifyGesture: some Gesture {
+        MagnifyGesture()
+            .onEnded { value in
+                if value.magnification > 1.3 && !isPhotoZoomed {
+                    isPhotoZoomed = true
+                } else if value.magnification < 0.8 && isPhotoZoomed {
+                    isPhotoZoomed = false
+                }
+            }
+    }
+
     // MARK: - Toast
 
     private func showToast(_ message: String) {
@@ -441,6 +494,12 @@ struct SwipeView: View {
 
     private var rightDragProgress: CGFloat {
         min(max(cardOffset.width / swipeThreshold, 0), 1.0)
+    }
+
+    /// Fade out UI chrome as the user drags toward galleries,
+    /// so gallery names aren't blocked by buttons and labels.
+    private var chromeOpacity: Double {
+        Double(1.0 - rightDragProgress)
     }
 
     private func findGallery(at point: CGPoint) -> UUID? {
@@ -619,3 +678,4 @@ struct ShareSheet: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+

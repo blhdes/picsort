@@ -147,8 +147,8 @@ final class SwipeViewModel {
     /// Double-tap: skip photo without dismissing — it will reappear next session.
     @MainActor
     func skipCurrent() {
-        guard currentIdentifier != nil else { return }
-        lastAction = nil
+        guard let identifier = currentIdentifier else { return }
+        lastAction = .skipped(assetIdentifier: identifier)
         advance()
     }
 
@@ -219,6 +219,9 @@ final class SwipeViewModel {
                     await photoService.removePhoto(assetIdentifier: identifier, fromAlbum: albumID)
                 }
             }
+
+        case .skipped(let identifier):
+            pushBackToFront(identifier: identifier)
         }
 
         lastAction = nil
@@ -363,6 +366,7 @@ final class SwipeViewModel {
 enum SwipeAction {
     case dismissed(assetIdentifier: String)
     case sorted(assetIdentifier: String, gallery: Gallery)
+    case skipped(assetIdentifier: String)
 }
 
 /// When sorting from an existing album, determines whether photos

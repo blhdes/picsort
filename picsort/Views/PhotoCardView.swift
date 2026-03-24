@@ -4,15 +4,17 @@ struct PhotoCardView: View {
     let assetIdentifier: String
     let photoService: PhotoLibraryService
     let offset: CGSize
+    var isZoomed: Bool = false
 
     @State private var loader: PhotoImageLoader
 
     private let swipeThreshold: CGFloat = 100
 
-    init(assetIdentifier: String, photoService: PhotoLibraryService, offset: CGSize = .zero) {
+    init(assetIdentifier: String, photoService: PhotoLibraryService, offset: CGSize = .zero, isZoomed: Bool = false) {
         self.assetIdentifier = assetIdentifier
         self.photoService = photoService
         self.offset = offset
+        self.isZoomed = isZoomed
         self._loader = State(initialValue: PhotoImageLoader(
             service: photoService,
             assetIdentifier: assetIdentifier,
@@ -26,8 +28,9 @@ struct PhotoCardView: View {
                 if let image = loader.image {
                     Image(uiImage: image)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
+                        .aspectRatio(contentMode: isZoomed ? .fill : .fit)
                         .frame(width: geo.size.width, height: geo.size.height)
+                        .animation(.easeInOut(duration: 0.3), value: isZoomed)
                 } else {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)

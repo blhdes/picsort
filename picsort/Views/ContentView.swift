@@ -17,31 +17,21 @@ struct ContentView: View {
                     sortMode: sortMode,
                     focusDuration: focusDuration,
                     isOnThisDay: isOnThisDay,
+                    onBack: {
+                        self.startDate = nil
+                        self.focusDuration = nil
+                        self.isOnThisDay = false
+                    },
+                    onShowGalleries: {
+                        showGalleries = true
+                    },
                     onSessionEnd: {
                         self.startDate = nil
                         self.focusDuration = nil
                         self.isOnThisDay = false
                     }
                 )
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            self.startDate = nil
-                            self.focusDuration = nil
-                            self.isOnThisDay = false
-                        } label: {
-                            Image(systemName: "calendar")
-                        }
-                    }
-
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showGalleries = true
-                        } label: {
-                            Image(systemName: "rectangle.stack")
-                        }
-                    }
-                }
+                .navigationBarHidden(true)
             } else {
                 DatePickerView(
                     selectedDate: $startDate,
