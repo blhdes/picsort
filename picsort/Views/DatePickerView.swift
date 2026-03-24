@@ -8,6 +8,7 @@ struct DatePickerView: View {
     @Binding var focusDuration: TimeInterval?
     @Binding var isOnThisDay: Bool
     @Binding var showGalleries: Bool
+    @Binding var showDuplicateSweep: Bool
 
     @State private var pickerDate = Date()
     private let photoService = PhotoLibraryService.shared
@@ -76,6 +77,13 @@ struct DatePickerView: View {
                         selectedDate = .now
                     } label: {
                         Label("On This Day", systemImage: "clock.arrow.circlepath")
+                            .font(.subheadline)
+                    }
+
+                    Button {
+                        showDuplicateSweep = true
+                    } label: {
+                        Label("Duplicate Sweep", systemImage: "square.on.square")
                             .font(.subheadline)
                     }
                 }

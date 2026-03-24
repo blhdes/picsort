@@ -7,10 +7,15 @@ struct ContentView: View {
     @State private var focusDuration: TimeInterval?
     @State private var isOnThisDay = false
     @State private var showGalleries = false
+    @State private var showDuplicateSweep = false
 
     var body: some View {
         NavigationStack {
-            if let startDate {
+            if showDuplicateSweep {
+                DuplicateSweepView(onClose: {
+                    showDuplicateSweep = false
+                })
+            } else if let startDate {
                 SwipeView(
                     startDate: startDate,
                     albumIdentifier: selectedAlbum?.collectionIdentifier,
@@ -39,7 +44,8 @@ struct ContentView: View {
                     sortMode: $sortMode,
                     focusDuration: $focusDuration,
                     isOnThisDay: $isOnThisDay,
-                    showGalleries: $showGalleries
+                    showGalleries: $showGalleries,
+                    showDuplicateSweep: $showDuplicateSweep
                 )
             }
         }
