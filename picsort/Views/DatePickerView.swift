@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import Photos
 
 struct DatePickerView: View {
@@ -19,7 +20,10 @@ struct DatePickerView: View {
     @State private var unsortedCount: Int = 0
     @State private var showAlbumPicker = false
     @State private var showFullCalendar = false
+    @State private var showDismissedPhotos = false
     @State private var permissionDenied = false
+
+    @Query private var dismissedPhotos: [DismissedPhoto]
 
     var body: some View {
         VStack(spacing: 28) {
@@ -88,6 +92,15 @@ struct DatePickerView: View {
                         Label("Duplicate Sweep", systemImage: "square.on.square")
                             .font(.subheadline)
                     }
+
+                    if !dismissedPhotos.isEmpty {
+                        Button {
+                            showDismissedPhotos = true
+                        } label: {
+                            Label("Dismissed (\(dismissedPhotos.count))", systemImage: "trash.circle")
+                                .font(.subheadline)
+                        }
+                    }
                 }
             } else if permissionDenied {
                 Spacer()
@@ -141,6 +154,11 @@ struct DatePickerView: View {
                         Button("Cancel") { showAlbumPicker = false }
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showDismissedPhotos) {
+            NavigationStack {
+                DismissedPhotosView()
             }
         }
         .task {

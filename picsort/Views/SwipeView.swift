@@ -232,14 +232,7 @@ struct SwipeView: View {
                     .opacity(chromeOpacity)
                 }
         }
-        // Success message overlay
-        .overlay {
-            if let feedback = deleteMessage {
-                deleteFeedbackOverlay(feedback)
-                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: deleteMessage != nil)
+        .deleteFeedback($deleteMessage)
         // Counter + toast at top
         .overlay(alignment: .top) {
             VStack(spacing: 6) {
@@ -554,24 +547,6 @@ struct SwipeView: View {
         }
     }
 
-    @ViewBuilder
-    private func deleteFeedbackOverlay(_ feedback: DeleteFeedback) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checkmark.circle")
-                .font(.system(size: 36))
-                .foregroundStyle(.primary)
-
-            Text("\(feedback.sessionCount) photos deleted")
-                .font(.title3)
-                .fontWeight(.semibold)
-
-            Text("\(feedback.totalCount) cleaned up in total")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .padding(32)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-    }
 
     // MARK: - Session Summary
 
@@ -641,8 +616,11 @@ struct SwipeView: View {
 
     // MARK: - Empty State
 
+    @ViewBuilder
     private var emptyStateView: some View {
         VStack(spacing: 16) {
+            Spacer()
+
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
@@ -656,15 +634,62 @@ struct SwipeView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                if let viewModel, viewModel.dismissedCount > 0 {
+                    Button {
+                        performBatchDelete(viewModel: viewModel)
+                    } label: {
+                        Text("Delete \(viewModel.dismissedCount)")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                    .controlSize(.large)
+                    .disabled(isDeleting)
+                    .padding(.horizontal, 40)
+                }
+
+                Button {
+                    onBack?()
+                } label: {
+                    Text("Back to Calendar")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .padding(.horizontal, 40)
+            }
+            .padding(.bottom, 40)
         }
+        .overlay(alignment: .topLeading) {
+            Button {
+                onBack?()
+            } label: {
+                Image(systemName: "calendar")
+                    .font(.body)
+                    .padding(10)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .padding(.leading, 16)
+            .padding(.top, 8)
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                onShowGalleries?()
+            } label: {
+                Image(systemName: "rectangle.stack")
+                    .font(.body)
+                    .padding(10)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .padding(.trailing, 16)
+            .padding(.top, 8)
+        }
+        .deleteFeedback($deleteMessage)
     }
-}
-
-// MARK: - Delete Feedback
-
-struct DeleteFeedback: Equatable {
-    let sessionCount: Int
-    let totalCount: Int
 }
 
 // MARK: - Share Sheet

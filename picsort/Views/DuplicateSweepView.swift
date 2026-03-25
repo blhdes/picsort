@@ -8,7 +8,8 @@ struct DuplicateSweepView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: DuplicateSweepViewModel?
     @State private var showPicker = true
-    @State private var deleteMessage: String?
+    @State private var deleteMessage: DeleteFeedback?
+    @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @State private var keptID: String?
 
     private let photoService = PhotoLibraryService.shared
@@ -46,23 +47,7 @@ struct DuplicateSweepView: View {
             .padding(.leading, 16)
             .padding(.top, 8)
         }
-        // Success message overlay
-        .overlay {
-            if let deleteMessage {
-                VStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 36))
-                        .foregroundStyle(.primary)
-                    Text(deleteMessage)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                }
-                .padding(32)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-                .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: deleteMessage != nil)
+        .deleteFeedback($deleteMessage)
         .onAppear {
             if viewModel == nil {
                 viewModel = DuplicateSweepViewModel(modelContext: modelContext)
@@ -285,8 +270,9 @@ struct DuplicateSweepView: View {
                         Task {
                             let count = await viewModel.batchDelete()
                             if count > 0 {
-                                deleteMessage = "\(count) photos deleted"
-                                try? await Task.sleep(for: .seconds(2))
+                                totalDeletedPhotos += count
+                                deleteMessage = DeleteFeedback(sessionCount: count, totalCount: totalDeletedPhotos)
+                                try? await Task.sleep(for: .seconds(2.5))
                                 deleteMessage = nil
                             }
                         }

@@ -10,10 +10,10 @@ struct GalleryDetailView: View {
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
     @State private var showColorPicker = false
+    @State private var previewIdentifier: String?
 
-    private let columns = [GridItem(.adaptive(minimum: 100), spacing: 2)]
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 1.5), count: 3)
 
-    /// Thumbnail size accounting for retina scale (3 columns ≈ 130pt each).
     private static let thumbnailSize: CGSize = {
         let side = (UIScreen.main.bounds.width / 3) * UIScreen.main.scale
         return CGSize(width: side, height: side)
@@ -94,15 +94,21 @@ struct GalleryDetailView: View {
                     .background(Color(.systemBackground))
 
                     ScrollView {
-                        LazyVGrid(columns: columns, spacing: 2) {
+                        LazyVGrid(columns: columns, spacing: 1.5) {
                             ForEach(allIdentifiers, id: \.self) { identifier in
-                                PhotoThumbnailView(
-                                    assetIdentifier: identifier,
-                                    photoService: photoService,
-                                    targetSize: Self.thumbnailSize
-                                )
-                                .aspectRatio(1, contentMode: .fill)
-                                .clipped()
+                                Color.clear
+                                    .aspectRatio(1, contentMode: .fit)
+                                    .overlay {
+                                        PhotoThumbnailView(
+                                            assetIdentifier: identifier,
+                                            photoService: photoService,
+                                            targetSize: Self.thumbnailSize
+                                        )
+                                    }
+                                    .clipped()
+                                    .onLongPressGesture {
+                                        previewIdentifier = identifier
+                                    }
                             }
                         }
                     }
@@ -110,6 +116,16 @@ struct GalleryDetailView: View {
             }
         }
         .navigationTitle(gallery.name)
+        .fullScreenCover(item: Binding(
+            get: { previewIdentifier.map { PhotoPreviewItem(id: $0) } },
+            set: { previewIdentifier = $0?.id }
+        )) { item in
+            PhotoPreviewOverlay(
+                identifier: item.id,
+                photoService: photoService,
+                onDismiss: { previewIdentifier = nil }
+            )
+        }
         .task {
             await syncAndLoad()
         }
