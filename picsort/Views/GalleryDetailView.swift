@@ -12,12 +12,7 @@ struct GalleryDetailView: View {
     @State private var showColorPicker = false
     @State private var previewIdentifier: String?
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 1.5), count: 3)
-
-    private static let thumbnailSize: CGSize = {
-        let side = (UIScreen.main.bounds.width / 3) * UIScreen.main.scale
-        return CGSize(width: side, height: side)
-    }()
+    private let columns = PhotoThumbnailView.gridColumns
 
     var body: some View {
         Group {
@@ -96,19 +91,13 @@ struct GalleryDetailView: View {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 1.5) {
                             ForEach(allIdentifiers, id: \.self) { identifier in
-                                Color.clear
-                                    .aspectRatio(1, contentMode: .fit)
-                                    .overlay {
-                                        PhotoThumbnailView(
-                                            assetIdentifier: identifier,
-                                            photoService: photoService,
-                                            targetSize: Self.thumbnailSize
-                                        )
-                                    }
-                                    .clipped()
-                                    .onLongPressGesture {
-                                        previewIdentifier = identifier
-                                    }
+                                PhotoThumbnailView(
+                                    assetIdentifier: identifier,
+                                    photoService: photoService
+                                )
+                                .onLongPressGesture {
+                                    previewIdentifier = identifier
+                                }
                             }
                         }
                     }
@@ -171,6 +160,7 @@ struct GalleryDetailView: View {
 
 // MARK: - Thumbnail View
 
+/// Square thumbnail that clips to 1:1 with correct hit targets.
 struct PhotoThumbnailView: View {
     let assetIdentifier: String
     let photoService: PhotoLibraryService
@@ -178,7 +168,16 @@ struct PhotoThumbnailView: View {
 
     @State private var loader: PhotoImageLoader
 
-    init(assetIdentifier: String, photoService: PhotoLibraryService, targetSize: CGSize = CGSize(width: 400, height: 400)) {
+    /// Standard thumbnail size for a 3-column grid.
+    static let gridSize: CGSize = {
+        let side = (UIScreen.main.bounds.width / 3) * UIScreen.main.scale
+        return CGSize(width: side, height: side)
+    }()
+
+    /// Standard 3-column grid layout.
+    static let gridColumns = Array(repeating: GridItem(.flexible(), spacing: 1.5), count: 3)
+
+    init(assetIdentifier: String, photoService: PhotoLibraryService, targetSize: CGSize = PhotoThumbnailView.gridSize) {
         self.assetIdentifier = assetIdentifier
         self.photoService = photoService
         self.targetSize = targetSize
@@ -190,17 +189,23 @@ struct PhotoThumbnailView: View {
     }
 
     var body: some View {
-        Group {
-            if let image = loader.image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                Rectangle()
-                    .fill(Color(.systemGray5))
-                    .overlay { ProgressView() }
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                Group {
+                    if let image = loader.image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Rectangle()
+                            .fill(Color(.systemGray5))
+                            .overlay { ProgressView() }
+                    }
+                }
             }
-        }
-        .task { await loader.load() }
+            .clipped()
+            .contentShape(Rectangle())
+            .task { await loader.load() }
     }
 }

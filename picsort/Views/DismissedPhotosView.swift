@@ -11,12 +11,7 @@ struct DismissedPhotosView: View {
     @State private var previewIdentifier: String?
 
     private let photoService = PhotoLibraryService.shared
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 1.5), count: 3)
-
-    private static let thumbnailSize: CGSize = {
-        let side = (UIScreen.main.bounds.width / 3) * UIScreen.main.scale
-        return CGSize(width: side, height: side)
-    }()
+    private let columns = PhotoThumbnailView.gridColumns
 
     var body: some View {
         Group {
@@ -58,37 +53,29 @@ struct DismissedPhotosView: View {
                                 ForEach(viewModel.dismissedPhotos, id: \.assetIdentifier) { photo in
                                     let isSelected = viewModel.selectedIdentifiers.contains(photo.assetIdentifier)
 
-                                    Button {
-                                        viewModel.toggleSelection(photo.assetIdentifier)
-                                    } label: {
-                                        Color.clear
-                                            .aspectRatio(1, contentMode: .fit)
-                                            .overlay {
-                                                PhotoThumbnailView(
-                                                    assetIdentifier: photo.assetIdentifier,
-                                                    photoService: photoService,
-                                                    targetSize: Self.thumbnailSize
-                                                )
-                                            }
-                                            .clipped()
-                                            .overlay(alignment: .topTrailing) {
-                                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                                    .font(.title3)
-                                                    .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
-                                                    .shadow(radius: 2)
-                                                    .padding(6)
-                                            }
-                                            .overlay {
-                                                if isSelected {
-                                                    Color.accentColor.opacity(0.2)
-                                                }
-                                            }
+                                    PhotoThumbnailView(
+                                        assetIdentifier: photo.assetIdentifier,
+                                        photoService: photoService
+                                    )
+                                    .overlay(alignment: .topTrailing) {
+                                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                            .font(.title3)
+                                            .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
+                                            .shadow(radius: 2)
+                                            .padding(6)
                                     }
-                                    .buttonStyle(.plain)
-                                    .id(photo.assetIdentifier)
+                                    .overlay {
+                                        if isSelected {
+                                            Color.accentColor.opacity(0.2)
+                                        }
+                                    }
+                                    .onTapGesture {
+                                        viewModel.toggleSelection(photo.assetIdentifier)
+                                    }
                                     .onLongPressGesture {
                                         previewIdentifier = photo.assetIdentifier
                                     }
+                                    .id(photo.assetIdentifier)
                                 }
                             }
                         }
