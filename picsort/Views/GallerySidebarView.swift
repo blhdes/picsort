@@ -52,22 +52,22 @@ struct GallerySidebarView: View {
 
 extension Color {
     static let pastels: [Color] = [
-        Color(red: 0.95, green: 0.6, blue: 0.6),   // soft pink
-        Color(red: 0.6, green: 0.8, blue: 0.95),    // soft blue
-        Color(red: 0.7, green: 0.9, blue: 0.7),     // soft green
-        Color(red: 0.9, green: 0.75, blue: 0.95),   // soft lavender
-        Color(red: 0.95, green: 0.85, blue: 0.55),  // soft yellow
-        Color(red: 0.95, green: 0.7, blue: 0.5),    // soft peach
-        Color(red: 0.6, green: 0.85, blue: 0.85),   // soft teal
-        Color(red: 0.85, green: 0.65, blue: 0.85),  // soft mauve
-        Color(red: 0.75, green: 0.85, blue: 0.6),   // soft lime
-        Color(red: 0.8, green: 0.7, blue: 0.95),    // soft violet
+        Color(red: 1.0, green: 0.18, blue: 0.47),   // neon pink
+        Color(red: 0.0, green: 0.71, blue: 1.0),    // neon blue
+        Color(red: 0.22, green: 1.0, blue: 0.08),   // neon green
+        Color(red: 0.75, green: 0.0, blue: 1.0),    // neon purple
+        Color(red: 1.0, green: 0.90, blue: 0.0),    // neon yellow
+        Color(red: 1.0, green: 0.40, blue: 0.0),    // neon orange
+        Color(red: 0.0, green: 1.0, blue: 0.93),    // neon cyan
+        Color(red: 1.0, green: 0.0, blue: 0.25),    // neon red
+        Color(red: 0.80, green: 1.0, blue: 0.0),    // neon lime
+        Color(red: 1.0, green: 0.0, blue: 1.0),     // neon magenta
     ]
 
     static let pastelHexes: [String] = [
-        "#F29999", "#99CCEE", "#B3E6B3", "#E6BFF2",
-        "#F2D98C", "#F2B380", "#99D9D9", "#D9A6D9",
-        "#BFD999", "#CCB3F2",
+        "#FF2D78", "#00B4FF", "#39FF14", "#BF00FF",
+        "#FFE600", "#FF6600", "#00FFEE", "#FF0040",
+        "#CCFF00", "#FF00FF",
     ]
 
     static func pastel(for index: Int) -> Color {
