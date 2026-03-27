@@ -23,6 +23,22 @@ Current name: **picsort**
 2. **Flic** — most fun to say, gesture-native
 3. **Sweep** — cohesive with the duplicate feature, clean verb
 
+## Cull vs Culla
+
+| | Cull | Culla |
+|---|---|---|
+| Syllables | 1 | 2 |
+| Feel | Sharp, photographer-native | Soft, approachable |
+| Risk | "cull" has negative connotations outside photography | None |
+| Brand pattern | Verb-as-name | Proper noun (Canva, Figma, Halide) |
+| Domain | Likely taken or expensive | More likely available |
+
+**Verdict: Culla is the stronger product name.** "Cull" is the concept, Culla is the brand.
+
+- Check `culla.app` availability on Porkbun
+
+---
+
 ## Notes
 
 - **Cull** confirmed available on the App Store
