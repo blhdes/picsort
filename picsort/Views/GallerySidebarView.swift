@@ -131,24 +131,32 @@ struct GallerySidebarItem: View {
 
     var body: some View {
         ZStack(alignment: .leading) {
-            // Neon background — only visible during drag, fades in with progress
-            if isDragging {
-                neonColor
-                    .opacity(isHighlighted ? 0.9 : 0.3 + 0.5 * dragProgress)
-            }
+            neonColor
+                .opacity(backgroundOpacity)
 
-            // Gallery name — always visible, but subtle at rest
             Text(gallery.name)
-                .font(isHighlighted ? .title2 : .title3)
-                .fontWeight(isHighlighted ? .bold : .medium)
+                .font(.title3)
+                .fontWeight(.semibold)
                 .foregroundStyle(isDragging ? .white : .secondary)
-                .shadow(color: isDragging ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
+                .shadow(color: isDragging ? .black.opacity(0.25) : .clear, radius: 2, x: 0, y: 1)
                 .padding(.leading, 20)
-                .opacity(isDragging ? 1.0 : 0.5)
+                .opacity(textOpacity)
+                .scaleEffect(isHighlighted ? 1.08 : 1.0, anchor: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
+        .animation(.snappy(duration: 0.25), value: isHighlighted)
         .animation(.easeInOut(duration: 0.2), value: isDragging)
+    }
+
+    private var backgroundOpacity: Double {
+        guard isDragging else { return 0 }
+        return isHighlighted ? 0.85 : 0.2 + 0.4 * dragProgress
+    }
+
+    private var textOpacity: Double {
+        if !isDragging { return 0.5 }
+        return isHighlighted ? 1.0 : 0.65
     }
 }
 
