@@ -37,11 +37,18 @@ private struct SplashGate: View {
             Color(.systemBackground)
                 .ignoresSafeArea()
 
-            Image("LaunchIcon")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+            VStack(spacing: 16) {
+                Image("LaunchIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+
+                Text("culla")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .tracking(2)
+                    .foregroundStyle(.primary)
+            }
         }
     }
 }
