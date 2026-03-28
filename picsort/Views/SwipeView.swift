@@ -85,9 +85,6 @@ struct SwipeView: View {
             }
 
         }
-        .onPreferenceChange(SidebarFramePreferenceKey.self) { frame in
-            sidebarFrame = frame
-        }
         .sheet(isPresented: $showGallerySelector) {
             GallerySelectionSheet(
                 selectedIDs: $sidebarGalleryIDs,
@@ -172,6 +169,9 @@ struct SwipeView: View {
                     }
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
+                    .onPreferenceChange(SidebarFramePreferenceKey.self) { frame in
+                        sidebarFrame = frame
+                    }
                 }
 
                 // "Manage" button — bottom right, tappable
