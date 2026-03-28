@@ -156,20 +156,16 @@ struct SwipeView: View {
                 .highPriorityGesture(dragGesture(viewModel: viewModel))
                 .simultaneousGesture(magnifyGesture)
 
-                // Sidebar overlay — slides in from the right as user drags
+                // Sidebar overlay — visible ABOVE the photo, non-interactive
                 .overlay {
-                    let progress = isLongPressing ? 1.0 : rightDragProgress
-                    let sidebarWidth = geo.size.width * 0.5
-
                     HStack(spacing: 0) {
                         Spacer()
                         GallerySidebarView(
                             galleries: sidebarGalleries,
                             highlightedID: highlightedGalleryID,
-                            dragProgress: progress
+                            dragProgress: isLongPressing ? 1.0 : rightDragProgress
                         )
-                        .frame(width: sidebarWidth)
-                        .offset(x: (1.0 - progress) * sidebarWidth)
+                        .frame(width: geo.size.width * 0.5)
                     }
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
