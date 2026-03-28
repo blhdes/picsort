@@ -32,17 +32,17 @@ struct GallerySidebarView: View {
                         isDragging: isDragging,
                         dragProgress: dragProgress
                     )
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(
-                                key: GalleryFramePreferenceKey.self,
-                                value: [gallery.id: geo.frame(in: .global)]
-                            )
-                        }
-                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(
+                        key: SidebarFramePreferenceKey.self,
+                        value: geo.frame(in: .global)
+                    )
+                }
+            )
         }
     }
 
@@ -162,9 +162,9 @@ struct GallerySidebarItem: View {
 
 // MARK: - Preference Key
 
-struct GalleryFramePreferenceKey: PreferenceKey {
-    static var defaultValue: [UUID: CGRect] = [:]
-    static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
-        value.merge(nextValue(), uniquingKeysWith: { $1 })
+struct SidebarFramePreferenceKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
     }
 }
